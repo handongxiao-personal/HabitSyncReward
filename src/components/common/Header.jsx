@@ -1,25 +1,22 @@
-import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Header = () => {
-  const { state, actions } = useApp();
-  
+  const { signOut, currentUser } = useAuth();
+
   return (
     <header className="bg-white px-6 py-4">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">
           HabitSync Rewards
         </h1>
-        <button
-          onClick={actions.toggleTheme}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          aria-label="切换主题"
-        >
-          {state.isDarkMode ? (
-            <span className="text-xl">☀️</span>
-          ) : (
-            <span className="text-xl">🌙</span>
-          )}
-        </button>
+        {currentUser && (
+          <button
+            onClick={signOut}
+            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            登出
+          </button>
+        )}
       </div>
     </header>
   );

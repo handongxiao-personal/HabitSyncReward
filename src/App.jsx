@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
+import { AuthProvider } from './context/AuthContext';
 import { AppProvider, useApp } from './context/AppContext';
-import { demoCurrentUserData, demoOtherUserData } from './utils/demoData';
 
 // Import components
 import Header from './components/common/Header';
@@ -8,32 +8,21 @@ import UserSwitcher from './components/common/UserSwitcher';
 import ScoreDisplay from './components/common/ScoreDisplay';
 import NavigationTabs from './components/common/NavigationTabs';
 import FloatingActionButton from './components/common/FloatingActionButton';
+import AuthStatus from './components/auth/AuthStatus';
+import ToastContainer from './components/common/Toast';
+import FirebaseDebug from './components/common/FirebaseDebug';
+import ConfigWarning from './components/common/ConfigWarning';
+import PersistenceTest from './components/common/PersistenceTest';
 
 // Import content components
 import TaskManager from './components/tasks/TaskManager';
 import RewardManager from './components/rewards/RewardManager';
 import ActivityTimeline from './components/activity/ActivityTimeline';
+import SettingsPage from './components/settings/SettingsPage';
 
 // Main App Content
 const AppContent = () => {
   const { state, actions } = useApp();
-
-  // Load demo data on component mount
-  useEffect(() => {
-    actions.setLoading('tasks', true);
-    actions.setLoading('rewards', true);
-    actions.setLoading('activities', true);
-    
-    // Simulate loading delay
-    setTimeout(() => {
-      actions.updateUserData('currentUserData', demoCurrentUserData);
-      actions.updateUserData('otherUserData', demoOtherUserData);
-      
-      actions.setLoading('tasks', false);
-      actions.setLoading('rewards', false);
-      actions.setLoading('activities', false);
-    }, 1000);
-  }, []);
 
   // Render content based on active tab
   const renderContent = () => {
@@ -44,6 +33,8 @@ const AppContent = () => {
         return <RewardManager onFloatingButtonClick={handleFloatingButtonClick} />;
       case 'activity':
         return <ActivityTimeline />;
+      case 'settings':
+        return <SettingsPage />;
       default:
         return <TaskManager onFloatingButtonClick={handleFloatingButtonClick} />;
     }
@@ -64,40 +55,58 @@ const AppContent = () => {
   };
 
   return (
-    <div className={`min-h-screen ${state.isDarkMode ? 'dark' : ''}`}>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <Header />
+    <AuthStatus>
+      <div className={`min-h-screen ${state.isDarkMode ? 'dark' : ''}`}>
+        {/* Configuration Warning */}
+        <ConfigWarning />
         
-        {/* User Switcher */}
-        <UserSwitcher />
-        
-        {/* Score Display */}
-        <ScoreDisplay />
-        
-        {/* Navigation Tabs */}
-        <NavigationTabs />
-        
-        {/* Main Content */}
-        <main>
-          {renderContent()}
-        </main>
-        
-        {/* Floating Action Button */}
-        <FloatingActionButton 
-          onAddClick={handleFloatingButtonClick}
-        />
+        <div className="min-h-screen bg-gray-50">
+          {/* Header */}
+          <Header />
+          
+          {/* User Switcher */}
+          <UserSwitcher />
+          
+          {/* Score Display */}
+          <ScoreDisplay />
+          
+          {/* Navigation Tabs */}
+          <NavigationTabs />
+          
+          {/* Main Content */}
+          <main>
+            {renderContent()}
+          </main>
+          
+          {/* Floating Action Button - 不在设置页面和查看伙伴数据时显示 */}
+          {state.activeTab !== 'settings' && state.viewingUser === 'current' && (
+            <FloatingActionButton 
+              onAddClick={handleFloatingButtonClick}
+            />
+          )}
+          
+          {/* Toast Notifications */}
+          <ToastContainer />
+          
+          {/* Firebase Debug (开发环境) */}
+          <FirebaseDebug />
+          
+          {/* Persistence Test */}
+          <PersistenceTest />
+        </div>
       </div>
-    </div>
+    </AuthStatus>
   );
 };
 
-// App with Provider
+// App with Providers
 const App = () => {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </AuthProvider>
   );
 };
 

@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============= 用户配置 =============
+    // 任何已认证用户可读，只能写自己的
+    match /userprofiles/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && userId == request.auth.uid;
+    }
+    
+    // ============= 配对系统 =============
+    
+    // 配对邀请 - 已认证用户可读写
+    match /pairinvitations/{invitationId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // 配对关系 - 已认证用户可读写
+    match /userpairs/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // ============= 核心数据 =============
+    
+    // 任务数据 - 已认证用户可读，只能写自己的
+    match /projects/{projectId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // 奖励数据 - 已认证用户可读，创建者和相关用户可写
+    match /wishlists/{wishlistId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // 活动日志 - 已认证用户可读，只能写自己的
+    match /activitylogs/{activityId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // 用户积分 - 已认证用户可读，只能写自己的
+    match /userscores/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && userId == request.auth.uid;
+    }
+  }
+}
+

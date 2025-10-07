@@ -1,15 +1,17 @@
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 
 const ScoreDisplay = () => {
   const { state } = useApp();
+  const { userProfile } = useAuth();
   
   const currentUserData = state.viewingUser === 'current' 
     ? state.currentUserData 
     : state.otherUserData;
     
-  const currentUserId = state.viewingUser === 'current' 
-    ? state.currentUserId 
-    : state.otherUserId;
+  const displayName = state.viewingUser === 'current' 
+    ? (userProfile?.username || '我')
+    : (state.partnerProfile?.username || '伙伴');
   
   return (
     <div className="mx-6 mb-6">
@@ -25,8 +27,8 @@ const ScoreDisplay = () => {
             <div className="text-5xl font-bold text-gray-900 mb-2">
               {currentUserData.score}
             </div>
-            <div className="text-sm font-mono text-gray-500">
-              {currentUserId}
+            <div className="text-sm text-gray-500">
+              {displayName}
             </div>
           </div>
           

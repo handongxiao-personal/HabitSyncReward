@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/helpers';
+import { toast } from '../common/Toast';
 import TaskCard from './TaskCard';
 import Modal from '../common/Modal';
 import TaskForm from './TaskForm';
@@ -38,22 +39,35 @@ const TaskManager = () => {
     actions.showTaskModal();
   };
   
-  const handleTaskSubmit = (formData) => {
-    if (editingTask) {
-      // 更新任务
-      actions.updateTask(editingTask.id, formData, currentUserId);
-    } else {
-      // 创建新任务
-      const newTask = {
-        id: generateId(),
-        ...formData,
-        isAchieved: false,
-        createdAt: new Date()
-      };
-      actions.addTask(newTask, currentUserId);
+  const handleTaskSubmit = async (formData) => {
+    try {
+      if (editingTask) {
+        // 更新任务
+        await actions.updateTask(editingTask.id, formData, currentUserId);
+        console.log('任务更新成功');
+        toast.success('任务更新成功！');
+      } else {
+        // 创建新任务 - 不需要手动生成ID，Firebase会自动生成
+        console.log('创建任务，用户ID:', currentUserId);
+        console.log('任务数据:', formData);
+        
+        if (!currentUserId) {
+          console.error('用户ID未设置，无法创建任务');
+          toast.error('用户未登录，请刷新页面重试');
+          return;
+        }
+        
+        await actions.addTask(formData, currentUserId);
+        console.log('任务创建成功');
+        toast.success('任务创建成功！');
+      }
+      
+      actions.hideTaskModal();
+      setEditingTask(null);
+    } catch (error) {
+      console.error('保存任务失败:', error);
+      toast.error('保存失败: ' + error.message);
     }
-    actions.hideTaskModal();
-    setEditingTask(null);
   };
   
   const handleCloseModal = () => {

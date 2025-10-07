@@ -4,9 +4,10 @@ const NavigationTabs = () => {
   const { state, actions } = useApp();
   
   const tabs = [
-    { id: 'tasks', label: 'Tasks' },
-    { id: 'rewards', label: 'Rewards' },
-    { id: 'activity', label: 'Activity' }
+    { id: 'tasks', label: '任务' },
+    { id: 'rewards', label: '奖励' },
+    { id: 'activity', label: '活动' },
+    { id: 'settings', label: '设置' }
   ];
   
   return (

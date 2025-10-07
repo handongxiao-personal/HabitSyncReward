@@ -12,8 +12,12 @@ const RewardCard = ({ reward, onClaim, onDelete, onEdit }) => {
     ? state.currentUserId 
     : state.otherUserId;
   
+  // 检查是否在查看伙伴的数据
+  const isViewingPartner = state.viewingUser === 'other';
+  const canEdit = !isViewingPartner;
+  
   const progress = calculateProgress(currentUserData.score, reward.pointCost);
-  const canClaim = currentUserData.score >= reward.pointCost && !reward.isClaimed;
+  const canClaim = currentUserData.score >= reward.pointCost && !reward.isClaimed && canEdit;
   
   const handleClaim = () => {
     actions.claimReward(reward.id, reward.pointCost, currentUserId);
@@ -40,26 +44,28 @@ const RewardCard = ({ reward, onClaim, onDelete, onEdit }) => {
             {reward.pointCost} pts
           </span>
         </div>
-        <div className="flex space-x-1">
-          <button
-            onClick={handleEdit}
-            className="text-gray-400 hover:text-blue-500 transition-colors"
-            title="Edit reward"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
-          <button
-            onClick={handleDelete}
-            className="text-gray-400 hover:text-red-500 transition-colors"
-            title="Delete reward"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
+        {canEdit && (
+          <div className="flex space-x-1">
+            <button
+              onClick={handleEdit}
+              className="text-gray-400 hover:text-blue-500 transition-colors"
+              title="编辑奖励"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              onClick={handleDelete}
+              className="text-gray-400 hover:text-red-500 transition-colors"
+              title="删除奖励"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
       
       <h3 className="font-medium text-gray-900 mb-4">{reward.name}</h3>
@@ -86,7 +92,14 @@ const RewardCard = ({ reward, onClaim, onDelete, onEdit }) => {
             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
         }`}
       >
-        {reward.isClaimed ? 'Claimed' : canClaim ? 'Claim Now' : 'Not Enough Points'}
+        {isViewingPartner 
+          ? '仅查看' 
+          : reward.isClaimed 
+          ? 'Claimed' 
+          : canClaim 
+          ? 'Claim Now' 
+          : 'Not Enough Points'
+        }
       </button>
     </div>
   );

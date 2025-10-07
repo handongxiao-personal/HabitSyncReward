@@ -4,6 +4,7 @@ import { generateId } from '../../utils/helpers';
 import RewardCard from './RewardCard';
 import Modal from '../common/Modal';
 import RewardForm from './RewardForm';
+import { toast } from 'react-hot-toast';
 
 const RewardManager = () => {
   const { state, actions } = useApp();
@@ -21,14 +22,22 @@ const RewardManager = () => {
   const availableRewards = currentUserData.rewards.filter(r => !r.isClaimed);
   const claimedRewards = currentUserData.rewards.filter(r => r.isClaimed);
   
-  const handleRewardClaim = (reward) => {
-    console.log('Reward claimed:', reward);
-    // Toast notification would go here
+  const handleRewardClaim = async (reward) => {
+    try {
+      await actions.claimReward(reward.id, currentUserId);
+      toast.success('奖励兑换成功！');
+    } catch (error) {
+      toast.error('兑换失败：' + error.message);
+    }
   };
   
-  const handleRewardDelete = (rewardId) => {
-    console.log('Reward deleted:', rewardId);
-    // Toast notification would go here
+  const handleRewardDelete = async (rewardId) => {
+    try {
+      await actions.deleteReward(rewardId, currentUserId);
+      toast.success('奖励删除成功！');
+    } catch (error) {
+      toast.error('删除失败：' + error.message);
+    }
   };
   
   const handleRewardEdit = (reward) => {
@@ -41,22 +50,33 @@ const RewardManager = () => {
     actions.showRewardModal();
   };
   
-  const handleRewardSubmit = (formData) => {
-    if (editingReward) {
-      // 更新奖励
-      actions.updateReward(editingReward.id, formData, currentUserId);
-    } else {
-      // 创建新奖励
-      const newReward = {
-        id: generateId(),
-        ...formData,
-        isClaimed: false,
-        createdAt: new Date()
-      };
-      actions.addReward(newReward, currentUserId);
+  const handleRewardSubmit = async (formData) => {
+    try {
+      if (!currentUserId) {
+        toast.error('用户未登录');
+        return;
+      }
+
+      if (editingReward) {
+        // 更新奖励
+        await actions.updateReward(editingReward.id, formData, currentUserId);
+        toast.success('奖励更新成功！');
+      } else {
+        // 创建新奖励
+        const newReward = {
+          ...formData,
+          isClaimed: false,
+          createdAt: new Date(),
+          userId: currentUserId
+        };
+        await actions.addReward(newReward, currentUserId);
+        toast.success('奖励创建成功！');
+      }
+      actions.hideRewardModal();
+      setEditingReward(null);
+    } catch (error) {
+      toast.error(editingReward ? '更新失败：' + error.message : '创建失败：' + error.message);
     }
-    actions.hideRewardModal();
-    setEditingReward(null);
   };
   
   const handleCloseModal = () => {
