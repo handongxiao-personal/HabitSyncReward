@@ -4,7 +4,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged 
+  onAuthStateChanged,
+  fetchSignInMethodsForEmail,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth, INITIAL_AUTH_TOKEN } from './firebase';
 
@@ -113,6 +115,9 @@ export const signInWithEmail = async (email, password) => {
     return result.user;
   } catch (error) {
     console.error('邮箱登录失败:', error);
+    console.error('详细错误信息:', JSON.stringify(error, null, 2));
+    
+    // Re-throw with more context if needed
     throw error;
   }
 };
@@ -126,6 +131,37 @@ export const signUpWithEmail = async (email, password) => {
     return result.user;
   } catch (error) {
     console.error('邮箱注册失败:', error);
+    throw error;
+  }
+};
+
+/**
+ * 检查邮箱是否已注册
+ */
+export const checkEmailExists = async (email) => {
+  try {
+    const methods = await fetchSignInMethodsForEmail(auth, email);
+    // If methods array has items, email is registered
+    return methods.length > 0;
+  } catch (error) {
+    console.error('检查邮箱失败:', error);
+    // If there's an error, assume email doesn't exist
+    return false;
+  }
+};
+
+/**
+ * 发送密码重置邮件
+ */
+export const resetPassword = async (email) => {
+  try {
+    await sendPasswordResetEmail(auth, email, {
+      url: window.location.origin, // 重置后返回到应用首页
+      handleCodeInApp: false
+    });
+    console.log('密码重置邮件已发送至:', email);
+  } catch (error) {
+    console.error('发送密码重置邮件失败:', error);
     throw error;
   }
 };

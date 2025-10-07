@@ -6,19 +6,12 @@ import UsernameSetup from './UsernameSetup';
 
 const AuthStatus = ({ children }) => {
   const { loading, error, isAuthenticated, currentUser, userProfile, setUsername } = useAuth();
-  
-  console.log('AuthStatus 状态:', { 
-    isAuthenticated, 
-    hasUser: !!currentUser, 
-    hasUsername: !!userProfile?.username,
-    userProfile 
-  });
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full mx-4">
-          <LoadingSpinner size="large" message="正在加载..." />
+          <LoadingSpinner size="large" message="Loading..." />
         </div>
       </div>
     );

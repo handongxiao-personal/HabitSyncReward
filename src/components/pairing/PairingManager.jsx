@@ -8,7 +8,7 @@ import {
   unpairUsers,
   getUserProfile
 } from '../../services/firestore';
-import { toast } from 'react-hot-toast';
+import { toast } from '../common/Toast';
 import Modal from '../common/Modal';
 
 const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
@@ -19,7 +19,7 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
   const [partnerProfile, setPartnerProfile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 监听收到的邀请
+  // Listen for received invitations
   useEffect(() => {
     if (!currentUser?.email) return;
 
@@ -30,7 +30,7 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
     return unsubscribe;
   }, [currentUser]);
 
-  // 获取伙伴的配置信息
+  // Fetch partner's profile
   useEffect(() => {
     if (!partnerId) {
       setPartnerProfile(null);
@@ -42,7 +42,7 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
         const profile = await getUserProfile(partnerId);
         setPartnerProfile(profile);
       } catch (error) {
-        console.error('获取伙伴配置失败:', error);
+        console.error('Failed to fetch partner profile:', error);
       }
     };
 
@@ -53,12 +53,12 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
     e.preventDefault();
     
     if (!partnerEmail.trim()) {
-      toast.error('请输入对方的邮箱');
+      toast.error("Please enter partner's email");
       return;
     }
 
     if (partnerEmail.toLowerCase() === currentUser.email.toLowerCase()) {
-      toast.error('不能邀请自己');
+      toast.error("Cannot invite yourself");
       return;
     }
 
@@ -67,14 +67,14 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
       await sendPairInvitation(
         currentUser.uid, 
         partnerEmail.trim(), 
-        currentUserProfile?.username || '未命名用户'
+        currentUserProfile?.username || 'Unnamed User'
       );
-      toast.success('邀请已发送！');
+      toast.success('Invitation sent!');
       setShowInviteModal(false);
       setPartnerEmail('');
     } catch (error) {
-      console.error('发送邀请失败:', error);
-      toast.error('发送失败：' + error.message);
+      console.error('Failed to send invitation:', error);
+      toast.error('Failed to send: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -84,13 +84,13 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
     setLoading(true);
     try {
       await acceptPairInvitation(invitation.id, currentUser.uid, invitation.fromUserId);
-      toast.success(`已接受 ${invitation.fromUserName} 的配对邀请！`);
+      toast.success(`Accepted pairing invitation from ${invitation.fromUserName}!`);
       if (onPartnerChange) {
         onPartnerChange(invitation.fromUserId);
       }
     } catch (error) {
-      console.error('接受邀请失败:', error);
-      toast.error('接受失败：' + error.message);
+      console.error('Failed to accept invitation:', error);
+      toast.error('Failed to accept: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -100,10 +100,10 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
     setLoading(true);
     try {
       await rejectPairInvitation(invitationId);
-      toast.success('已拒绝邀请');
+      toast.success('Invitation rejected');
     } catch (error) {
-      console.error('拒绝邀请失败:', error);
-      toast.error('操作失败：' + error.message);
+      console.error('Failed to reject invitation:', error);
+      toast.error('Operation failed: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -112,20 +112,20 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
   const handleUnpair = async () => {
     if (!partnerId) return;
     
-    if (!confirm(`确定要取消与 ${partnerProfile?.username || '对方'} 的配对吗？`)) {
+    if (!confirm(`Are you sure you want to unpair from ${partnerProfile?.username || 'partner'}?`)) {
       return;
     }
 
     setLoading(true);
     try {
       await unpairUsers(currentUser.uid, partnerId);
-      toast.success('已取消配对');
+      toast.success('Unpaired successfully');
       if (onPartnerChange) {
         onPartnerChange(null);
       }
     } catch (error) {
-      console.error('取消配对失败:', error);
-      toast.error('操作失败：' + error.message);
+      console.error('Failed to unpair:', error);
+      toast.error('Operation failed: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -134,18 +134,18 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-        <span className="mr-2">👥</span>
-        配对管理
+        <span className="mr-2">👯</span>
+        Partner Management
       </h3>
 
-      {/* 当前配对状态 */}
+      {/* Current pairing status */}
       {partnerId ? (
         <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">已配对伙伴</p>
+              <p className="text-sm text-gray-600 mb-1">Paired with</p>
               <p className="font-medium text-gray-900">
-                {partnerProfile?.username || '加载中...'}
+                {partnerProfile?.username || 'Loading...'}
               </p>
             </div>
             <button
@@ -153,33 +153,33 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
               disabled={loading}
               className="px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
             >
-              取消配对
+              Unpair
             </button>
           </div>
         </div>
       ) : (
         <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
           <p className="text-sm text-gray-600">
-            你还没有配对伙伴，发送邀请开始配对吧！
+            You don't have a partner yet. Send an invitation to start pairing!
           </p>
         </div>
       )}
 
-      {/* 邀请按钮 */}
+      {/* Invite button */}
       {!partnerId && (
         <button
           onClick={() => setShowInviteModal(true)}
           className="w-full mb-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
         >
-          发送配对邀请
+          Send Pairing Invitation
         </button>
       )}
 
-      {/* 收到的邀请 */}
+      {/* Received invitations */}
       {invitations.length > 0 && (
         <div className="space-y-2">
           <p className="text-sm font-medium text-gray-700 mb-2">
-            收到的邀请 ({invitations.length})
+            Received Invitations ({invitations.length})
           </p>
           {invitations.map((invitation) => (
             <div 
@@ -187,7 +187,7 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
               className="p-3 bg-blue-50 border border-blue-200 rounded-lg"
             >
               <p className="text-sm mb-2">
-                <span className="font-medium">{invitation.fromUserName}</span> 邀请你配对
+                <span className="font-medium">{invitation.fromUserName}</span> invited you to pair
               </p>
               <div className="flex space-x-2">
                 <button
@@ -195,14 +195,14 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
                   disabled={loading || partnerId}
                   className="flex-1 px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors disabled:opacity-50"
                 >
-                  接受
+                  Accept
                 </button>
                 <button
                   onClick={() => handleRejectInvitation(invitation.id)}
                   disabled={loading}
                   className="flex-1 px-3 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors disabled:opacity-50"
                 >
-                  拒绝
+                  Reject
                 </button>
               </div>
             </div>
@@ -210,17 +210,17 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
         </div>
       )}
 
-      {/* 发送邀请弹窗 */}
+      {/* Send invitation modal */}
       <Modal
         isOpen={showInviteModal}
         onClose={() => setShowInviteModal(false)}
-        title="发送配对邀请"
-        subtitle="输入对方的注册邮箱"
+        title="Send Pairing Invitation"
+        subtitle="Enter partner's registered email"
       >
         <form onSubmit={handleSendInvitation} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              对方的邮箱
+              Partner's Email
             </label>
             <input
               type="email"
@@ -231,7 +231,7 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              对方需要先注册账号才能收到邀请
+              Partner must register an account first to receive invitation
             </p>
           </div>
           
@@ -241,14 +241,14 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
               onClick={() => setShowInviteModal(false)}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              取消
+              Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
               className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
             >
-              {loading ? '发送中...' : '发送邀请'}
+              {loading ? 'Sending...' : 'Send Invitation'}
             </button>
           </div>
         </form>
@@ -258,4 +258,3 @@ const PairingManager = ({ currentUserProfile, partnerId, onPartnerChange }) => {
 };
 
 export default PairingManager;
-

@@ -4,9 +4,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // ============= 用户配置 =============
-    // 任何已认证用户可读，只能写自己的
+    // 允许未认证用户查询邮箱是否存在（用于登录检查）
+    // 已认证用户可读，只能写自己的
     match /userprofiles/{userId} {
-      allow read: if request.auth != null;
+      // 允许所有人执行查询（用于检查邮箱是否存在）
+      allow list: if true;
+      // 只有已认证用户可以读取单个文档
+      allow get: if request.auth != null;
+      // 只能写自己的配置
       allow write: if request.auth != null && userId == request.auth.uid;
     }
     

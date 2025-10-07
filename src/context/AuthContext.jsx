@@ -25,21 +25,43 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [partnerId, setPartnerId] = useState(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // 监听认证状态变化
   useEffect(() => {
     let mounted = true;
     
-    const unsubscribe = subscribeToAuthState((user) => {
+    const unsubscribe = subscribeToAuthState(async (user) => {
       if (!mounted) return;
       
       setCurrentUser(user);
+      
+      // 当用户变化时，重置 profileLoaded 状态
+      if (user) {
+        setProfileLoaded(false);
+      }
       
       // 生成用户ID对
       const ids = generateUserIds(user);
       setUserIds(ids);
       
-      setLoading(false);
+      // 如果用户存在且有邮箱，确保 userprofile 中有 email 字段
+      if (user?.email) {
+        try {
+          // 先获取现有的用户配置，避免覆盖 username
+          const existingProfile = await getUserProfile(user.uid);
+          await createOrUpdateUserProfile(user.uid, {
+            email: user.email,
+            updatedAt: serverTimestamp(),
+            // 保留现有的 username（如果有）
+            ...(existingProfile?.username && { username: existingProfile.username })
+          });
+        } catch (error) {
+          console.error('更新用户邮箱失败:', error);
+        }
+      }
+      
+      // 不在这里设置 setLoading(false)，等待 profile 加载完成
       setError(null);
     });
 
@@ -55,9 +77,10 @@ export const AuthProvider = ({ children }) => {
         setCurrentUser(user);
         const ids = generateUserIds(user);
         setUserIds(ids);
+      } else {
+        // 没有登录会话，停止加载
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     checkInitialAuth();
@@ -72,14 +95,42 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (!currentUser?.uid) {
       setUserProfile(null);
+      setProfileLoaded(true);
       return;
     }
 
+    setProfileLoaded(false);
+    let mounted = true;
+    
+    // 先立即获取一次用户配置
+    const loadProfile = async () => {
+      try {
+        const profile = await getUserProfile(currentUser.uid);
+        if (mounted) {
+          setUserProfile(profile);
+          setProfileLoaded(true);
+        }
+      } catch (error) {
+        console.error('加载用户配置失败:', error);
+        if (mounted) {
+          setProfileLoaded(true);
+        }
+      }
+    };
+    
+    loadProfile();
+    
+    // 然后设置实时监听器以获取后续更新（不影响 profileLoaded）
     const unsubscribe = subscribeToUserProfile(currentUser.uid, (profile) => {
-      setUserProfile(profile);
+      if (mounted) {
+        setUserProfile(profile);
+      }
     });
 
-    return unsubscribe;
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, [currentUser]);
 
   // 监听配对关系
@@ -108,6 +159,16 @@ export const AuthProvider = ({ children }) => {
 
     return unsubscribe;
   }, [currentUser]);
+
+  // 控制loading状态：只有当用户已认证且profile已加载时才停止loading
+  useEffect(() => {
+    if (currentUser && profileLoaded) {
+      setLoading(false);
+    } else if (currentUser && !profileLoaded) {
+      // 如果有用户但配置未加载，确保 loading 为 true
+      setLoading(true);
+    }
+  }, [currentUser, profileLoaded, loading]);
 
   // 登出函数
   const signOut = async () => {
@@ -145,16 +206,12 @@ export const AuthProvider = ({ children }) => {
       throw new Error('用户未登录');
     }
     
-    console.log('开始设置用户名:', { userId: currentUser.uid, username, email: currentUser.email });
-    
     try {
       await createOrUpdateUserProfile(currentUser.uid, {
         username,
         email: currentUser.email,
         createdAt: serverTimestamp()
       });
-      
-      console.log('用户名保存成功到Firebase');
       
       // 立即更新本地状态（实时监听器会在稍后覆盖）
       setUserProfile({
@@ -163,10 +220,8 @@ export const AuthProvider = ({ children }) => {
         email: currentUser.email,
         updatedAt: new Date()
       });
-      
-      console.log('本地状态已更新');
     } catch (error) {
-      console.error('设置用户名详细错误:', error);
+      console.error('设置用户名失败:', error);
       throw error;
     }
   };

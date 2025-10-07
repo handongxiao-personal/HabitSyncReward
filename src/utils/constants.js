@@ -12,7 +12,7 @@ export const TASK_TYPES = {
 export const TASK_TYPE_LABELS = {
   [TASK_TYPES.DAILY]: 'Daily',
   [TASK_TYPES.ACHIEVEMENT]: 'Achievement',
-  [TASK_TYPES.BAD_HABIT]: 'Bad Habit'
+  [TASK_TYPES.BAD_HABIT]: 'Bad Habits'
 };
 
 // Task type icons

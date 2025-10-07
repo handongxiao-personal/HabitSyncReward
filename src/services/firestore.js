@@ -490,6 +490,13 @@ export const deleteActivity = async (userId, activityId) => {
         rewardDoc = await transaction.get(rewardRef);
       }
       
+      // 如果是任务完成记录，还需要读取任务文档
+      let taskDoc = null;
+      if (activity.type === 'task_completed' && activity.relatedId) {
+        const taskRef = doc(db, COLLECTIONS.PROJECTS, activity.relatedId);
+        taskDoc = await transaction.get(taskRef);
+      }
+      
       // 然后执行所有写操作
       
       // 1. 删除活动记录
@@ -505,7 +512,19 @@ export const deleteActivity = async (userId, activityId) => {
         });
       }
       
-      // 3. 回滚用户积分
+      // 3. 如果是成就任务完成记录，恢复任务为未完成状态
+      if (activity.type === 'task_completed' && activity.relatedId && taskDoc?.exists()) {
+        const task = taskDoc.data();
+        if (task.type === 'achievement') {
+          const taskRef = doc(db, COLLECTIONS.PROJECTS, activity.relatedId);
+          transaction.update(taskRef, {
+            isAchieved: false,
+            updatedAt: serverTimestamp()
+          });
+        }
+      }
+      
+      // 4. 回滚用户积分
       if (userScoreDoc.exists()) {
         const currentData = userScoreDoc.data();
         
@@ -724,6 +743,24 @@ export const getUserProfile = async (userId) => {
   } catch (error) {
     console.error('获取用户配置失败:', error);
     throw error;
+  }
+};
+
+/**
+ * 通过邮箱查询用户是否存在
+ */
+export const checkUserExistsByEmail = async (email) => {
+  try {
+    const q = query(
+      collection(db, COLLECTIONS.USER_PROFILES),
+      where('email', '==', email)
+    );
+    const snapshot = await getDocs(q);
+    return !snapshot.empty;
+  } catch (error) {
+    console.error('检查邮箱失败:', error);
+    // If there's an error, return false to be safe
+    return false;
   }
 };
 

@@ -50,7 +50,9 @@ const ToastContainer = () => {
 
   useEffect(() => {
     const unsubscribe = subscribe(setToastList);
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const getToastStyles = (type) => {
@@ -98,11 +100,12 @@ const ToastContainer = () => {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed top-4 right-4 z-[9999] pointer-events-none">
       {toastList.map((toast) => (
         <div
           key={toast.id}
-          className={`${getToastStyles(toast.type)} animate-slide-in-right`}
+          className={`${getToastStyles(toast.type)} animate-slide-in-right pointer-events-auto`}
+          style={{ minWidth: '300px' }}
         >
           {getIcon(toast.type)}
           <span className="flex-1">{toast.message}</span>

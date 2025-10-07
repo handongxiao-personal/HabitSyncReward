@@ -10,9 +10,7 @@ import NavigationTabs from './components/common/NavigationTabs';
 import FloatingActionButton from './components/common/FloatingActionButton';
 import AuthStatus from './components/auth/AuthStatus';
 import ToastContainer from './components/common/Toast';
-import FirebaseDebug from './components/common/FirebaseDebug';
 import ConfigWarning from './components/common/ConfigWarning';
-import PersistenceTest from './components/common/PersistenceTest';
 
 // Import content components
 import TaskManager from './components/tasks/TaskManager';
@@ -55,47 +53,43 @@ const AppContent = () => {
   };
 
   return (
-    <AuthStatus>
-      <div className={`min-h-screen ${state.isDarkMode ? 'dark' : ''}`}>
-        {/* Configuration Warning */}
-        <ConfigWarning />
-        
-        <div className="min-h-screen bg-gray-50">
-          {/* Header */}
-          <Header />
+    <>
+      {/* Toast Notifications - 在最外层，这样登录页面也能显示 */}
+      <ToastContainer />
+      
+      <AuthStatus>
+        <div className={`min-h-screen ${state.isDarkMode ? 'dark' : ''}`}>
+          {/* Configuration Warning */}
+          <ConfigWarning />
           
-          {/* User Switcher */}
-          <UserSwitcher />
-          
-          {/* Score Display */}
-          <ScoreDisplay />
-          
-          {/* Navigation Tabs */}
-          <NavigationTabs />
-          
-          {/* Main Content */}
-          <main>
-            {renderContent()}
-          </main>
-          
-          {/* Floating Action Button - 不在设置页面和查看伙伴数据时显示 */}
-          {state.activeTab !== 'settings' && state.viewingUser === 'current' && (
-            <FloatingActionButton 
-              onAddClick={handleFloatingButtonClick}
-            />
-          )}
-          
-          {/* Toast Notifications */}
-          <ToastContainer />
-          
-          {/* Firebase Debug (开发环境) */}
-          <FirebaseDebug />
-          
-          {/* Persistence Test */}
-          <PersistenceTest />
+          <div className="min-h-screen bg-gray-50">
+            {/* Header */}
+            <Header />
+            
+            {/* User Switcher */}
+            <UserSwitcher />
+            
+            {/* Score Display */}
+            <ScoreDisplay />
+            
+            {/* Navigation Tabs */}
+            <NavigationTabs />
+            
+            {/* Main Content */}
+            <main>
+              {renderContent()}
+            </main>
+            
+            {/* Floating Action Button - 不在设置页面和查看伙伴数据时显示 */}
+            {state.activeTab !== 'settings' && state.viewingUser === 'current' && (
+              <FloatingActionButton 
+                onAddClick={handleFloatingButtonClick}
+              />
+            )}
+          </div>
         </div>
-      </div>
-    </AuthStatus>
+      </AuthStatus>
+    </>
   );
 };
 

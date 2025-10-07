@@ -100,7 +100,11 @@ const TaskManager = () => {
       {Object.entries(groupedTasks).map(([type, typeTasks]) => (
         <div key={type} className="mb-6">
           <h3 className="text-lg font-medium text-gray-800 mb-3 capitalize">
-            {type.replace('_', ' ')} Tasks
+            {type === 'bad_habit'
+              ? 'Bad Habits'
+              : type === 'achievement'
+              ? 'Achievements'
+              : `${type.replace('_', ' ')} Tasks`}
           </h3>
           <div className="grid gap-4 md:grid-cols-2">
             {typeTasks.map(task => (

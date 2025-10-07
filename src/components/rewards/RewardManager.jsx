@@ -4,7 +4,7 @@ import { generateId } from '../../utils/helpers';
 import RewardCard from './RewardCard';
 import Modal from '../common/Modal';
 import RewardForm from './RewardForm';
-import { toast } from 'react-hot-toast';
+import { toast } from '../common/Toast';
 
 const RewardManager = () => {
   const { state, actions } = useApp();
@@ -90,7 +90,7 @@ const RewardManager = () => {
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
           <span className="mr-2">🎁</span>
-          可兑换奖励
+          Available Rewards
         </h2>
         
         {availableRewards.length === 0 && (
@@ -119,7 +119,7 @@ const RewardManager = () => {
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
             <span className="mr-2">✅</span>
-            已兑换奖励
+            Claimed Rewards
           </h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {claimedRewards.map(reward => (

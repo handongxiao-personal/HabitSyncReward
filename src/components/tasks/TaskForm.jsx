@@ -29,8 +29,15 @@ const TaskForm = ({ task, onSubmit, onCancel, isEditing = false }) => {
     if (!formData.name.trim()) {
       newErrors.name = 'Task name is required';
     }
-    if (formData.pointValue === 0) {
+    
+    // 验证分数值
+    const pointValue = typeof formData.pointValue === 'string' ? parseInt(formData.pointValue) : formData.pointValue;
+    if (pointValue === 0 || formData.pointValue === '' || isNaN(pointValue)) {
       newErrors.pointValue = 'Point value cannot be 0';
+    } else if (formData.type === 'bad_habit' && pointValue > 0) {
+      newErrors.pointValue = 'Bad habit must have negative points';
+    } else if ((formData.type === 'daily' || formData.type === 'achievement') && pointValue < 0) {
+      newErrors.pointValue = 'Daily tasks and achievements must have positive points';
     }
     
     if (Object.keys(newErrors).length > 0) {
@@ -38,13 +45,55 @@ const TaskForm = ({ task, onSubmit, onCancel, isEditing = false }) => {
       return;
     }
     
+    // 确保 pointValue 是数字
+    const submitData = {
+      ...formData,
+      pointValue
+    };
+    
     // 清除错误并提交
     setErrors({});
-    onSubmit(formData);
+    onSubmit(submitData);
   };
   
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // 如果更改任务类型，自动调整默认分数
+    if (field === 'type') {
+      // 只在类型真正改变时才重置分数
+      setFormData(prev => {
+        if (prev[field] === value) {
+          // 类型没有改变，不做任何操作
+          return prev;
+        }
+        
+        // 类型改变了，设置默认分数
+        let defaultPoints = 10;
+        if (value === 'daily') defaultPoints = 10;
+        else if (value === 'achievement') defaultPoints = 50;
+        else if (value === 'bad_habit') defaultPoints = -10;
+        
+        return { ...prev, [field]: value, pointValue: defaultPoints };
+      });
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+    
+    // 清除该字段的错误
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: null }));
+    }
+  };
+
+  const handleNumberChange = (field, value) => {
+    // 如果输入为空字符串，保持空字符串状态
+    if (value === '') {
+      setFormData(prev => ({ ...prev, [field]: '' }));
+    } else {
+      const numValue = parseInt(value);
+      if (!isNaN(numValue)) {
+        setFormData(prev => ({ ...prev, [field]: numValue }));
+      }
+    }
     // 清除该字段的错误
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: null }));
@@ -79,7 +128,7 @@ const TaskForm = ({ task, onSubmit, onCancel, isEditing = false }) => {
         <input
           type="number"
           value={formData.pointValue}
-          onChange={(e) => handleInputChange('pointValue', parseInt(e.target.value) || 0)}
+          onChange={(e) => handleNumberChange('pointValue', e.target.value)}
           className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
             errors.pointValue ? 'border-red-500' : 'border-gray-300'
           }`}
@@ -89,7 +138,9 @@ const TaskForm = ({ task, onSubmit, onCancel, isEditing = false }) => {
           <p className="text-red-500 text-sm mt-1">{errors.pointValue}</p>
         )}
         <p className="text-xs text-gray-500 mt-1">
-          Use negative values for bad habits
+          {formData.type === 'bad_habit' 
+            ? 'Bad habits must use negative values (e.g., -10)'
+            : 'Daily tasks and achievements must use positive values (e.g., 10, 50)'}
         </p>
       </div>
       
@@ -104,7 +155,7 @@ const TaskForm = ({ task, onSubmit, onCancel, isEditing = false }) => {
         >
           {Object.entries(TASK_TYPES).map(([key, value]) => (
             <option key={key} value={value}>
-              {TASK_TYPE_LABELS[value]}
+              {value === 'bad_habit' ? 'Bad Habit' : TASK_TYPE_LABELS[value]}
             </option>
           ))}
         </select>
