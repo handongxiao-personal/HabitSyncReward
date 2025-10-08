@@ -17,50 +17,94 @@ service cloud.firestore {
     
     // ============= 配对系统 =============
     
-    // 配对邀请 - 已认证用户可读写
+    // 配对邀请 - 基于邮箱匹配（修复配对邀请问题）
     match /pairinvitations/{invitationId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
+      allow read: if request.auth != null && 
+        (resource.data.fromUserId == request.auth.uid || 
+         resource.data.toEmail == request.auth.token.email);
+      allow create: if request.auth != null && 
+        request.resource.data.fromUserId == request.auth.uid;
+      allow update: if request.auth != null && 
+        (resource.data.fromUserId == request.auth.uid || 
+         resource.data.toEmail == request.auth.token.email);
+      allow delete: if request.auth != null && 
+        (resource.data.fromUserId == request.auth.uid || 
+         resource.data.toEmail == request.auth.token.email);
     }
     
-    // 配对关系 - 已认证用户可读写
+    // 配对关系 - 只有配对双方可以访问
     match /userpairs/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if request.auth != null && 
+        (userId == request.auth.uid || 
+         resource.data.partnerId == request.auth.uid);
+      // 修复：允许用户创建自己的配对记录，或创建指向自己的配对记录
+      allow create: if request.auth != null && 
+        (userId == request.auth.uid || 
+         request.resource.data.partnerId == request.auth.uid);
+      // 修复：允许用户更新自己的配对记录，或更新指向自己的配对记录
+      allow update: if request.auth != null && 
+        (userId == request.auth.uid || 
+         resource.data.partnerId == request.auth.uid);
+      // 修复：允许用户删除自己的配对记录，或删除指向自己的配对记录
+      allow delete: if request.auth != null && 
+        (userId == request.auth.uid || 
+         resource.data.partnerId == request.auth.uid);
     }
     
-    // ============= 核心数据 =============
+    // ============= 核心数据 - 精确权限控制 =============
     
-    // 任务数据 - 已认证用户可读，只能写自己的
+    // 任务数据 - 自己的可增删改查，同伴的只能读取
     match /projects/{projectId} {
+      // 读取权限：所有认证用户可读（支持配对查看）
       allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      // 创建权限：只能创建自己的数据
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+      // 更新权限：只能更新自己的数据
+      allow update: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+      // 删除权限：只能删除自己的数据
+      allow delete: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
     }
     
-    // 奖励数据 - 已认证用户可读，创建者和相关用户可写
+    // 奖励数据 - 自己的可增删改查，同伴的只能读取
     match /wishlists/{wishlistId} {
+      // 读取权限：所有认证用户可读（支持配对查看）
       allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      // 创建权限：只能创建自己的数据
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+      // 更新权限：只能更新自己的数据
+      allow update: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+      // 删除权限：只能删除自己的数据
+      allow delete: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
     }
     
-    // 活动日志 - 已认证用户可读，只能写自己的
+    // 活动日志 - 自己的可增删改查，同伴的只能读取
     match /activitylogs/{activityId} {
+      // 读取权限：所有认证用户可读（支持配对查看）
       allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      // 创建权限：只能创建自己的数据
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+      // 更新权限：只能更新自己的数据
+      allow update: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+      // 删除权限：只能删除自己的数据
+      allow delete: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
     }
     
-    // 用户积分 - 已认证用户可读，只能写自己的
+    // 用户积分 - 自己的可增删改查，同伴的只能读取
     match /userscores/{userId} {
+      // 读取权限：所有认证用户可读（支持配对查看）
       allow read: if request.auth != null;
-      allow write: if request.auth != null && userId == request.auth.uid;
+      // 写入权限：只能修改自己的积分
+      allow write: if request.auth != null && 
+        userId == request.auth.uid;
     }
   }
 }
-

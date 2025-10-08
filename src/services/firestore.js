@@ -96,14 +96,23 @@ export const subscribeToUserTasks = (userId, callback) => {
  */
 export const createTask = async (userId, taskData) => {
   try {
-    const docRef = await addDoc(collection(db, COLLECTIONS.PROJECTS), {
+    const newTask = {
       ...taskData,
       userId,
       isAchieved: false,
       isActive: true,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    });
+    };
+    
+    const docRef = await addDoc(collection(db, COLLECTIONS.PROJECTS), newTask);
+    
+    // 等待文档确认写入（通过读取来确保写入完成）
+    await getDoc(docRef);
+    
+    // 添加小延迟确保监听器有时间触发（特别是在移动设备上）
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     return docRef.id;
   } catch (error) {
     console.error('创建任务失败:', error);
@@ -286,13 +295,22 @@ export const subscribeToUserRewards = (userId, callback) => {
  */
 export const createReward = async (userId, rewardData) => {
   try {
-    const docRef = await addDoc(collection(db, COLLECTIONS.WISHLISTS), {
+    const newReward = {
       ...rewardData,
       userId,
       isClaimed: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    });
+    };
+    
+    const docRef = await addDoc(collection(db, COLLECTIONS.WISHLISTS), newReward);
+    
+    // 等待文档确认写入（通过读取来确保写入完成）
+    await getDoc(docRef);
+    
+    // 添加小延迟确保监听器有时间触发（特别是在移动设备上）
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     return docRef.id;
   } catch (error) {
     console.error('创建奖励失败:', error);

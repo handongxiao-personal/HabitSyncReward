@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator, enableIndexedDbPersistence, enableMultiTabIndexedDbPersistence } from 'firebase/firestore';
 
 // 检查是否有Firebase配置
 const hasFirebaseConfig = !!(
@@ -37,6 +37,32 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// 启用离线持久化（对移动设备特别重要）
+if (hasFirebaseConfig) {
+  // 尝试启用多标签页持久化
+  enableMultiTabIndexedDbPersistence(db)
+    .then(() => {
+      console.log('✅ Firestore 离线持久化已启用（多标签页模式）');
+    })
+    .catch((err) => {
+      if (err.code === 'failed-precondition') {
+        // 多标签页模式失败，尝试单标签页模式
+        console.warn('⚠️ 多标签页持久化不可用，切换到单标签页模式');
+        enableIndexedDbPersistence(db)
+          .then(() => {
+            console.log('✅ Firestore 离线持久化已启用（单标签页模式）');
+          })
+          .catch((error) => {
+            console.error('❌ 离线持久化启用失败:', error);
+          });
+      } else if (err.code === 'unimplemented') {
+        console.warn('⚠️ 当前浏览器不支持离线持久化');
+      } else {
+        console.error('❌ 离线持久化启用失败:', err);
+      }
+    });
+}
 
 // 如果是demo模式且在开发环境，尝试连接模拟器
 if (!hasFirebaseConfig && import.meta.env.DEV) {
