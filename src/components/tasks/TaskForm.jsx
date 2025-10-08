@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { TASK_TYPES, TASK_TYPE_LABELS } from '../../utils/constants';
+import { useApp } from '../../context/AppContext';
 
 const TaskForm = ({ task, onSubmit, onCancel, isEditing = false }) => {
+  const { state } = useApp();
   const [formData, setFormData] = useState({
     name: '',
     pointValue: 10,
     type: 'daily'
   });
+  
+  // 根据当前查看的用户决定主题颜色
+  const isCurrentUser = state.viewingUser === 'current';
+  const themeColor = isCurrentUser ? 'purple' : 'blue';
   
   const [errors, setErrors] = useState({});
   
@@ -111,9 +117,24 @@ const TaskForm = ({ task, onSubmit, onCancel, isEditing = false }) => {
           value={formData.name}
           onChange={(e) => handleInputChange('name', e.target.value)}
           placeholder="e.g., Complete morning workout"
-          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+          className={`w-full px-3 py-2 border rounded-lg ${isCurrentUser ? 'focus:ring-2 focus:ring-purple-500' : ''} focus:border-transparent ${
             errors.name ? 'border-red-500' : 'border-gray-300'
           }`}
+          style={!isCurrentUser ? {
+            outlineColor: '#4169E1'
+          } : {}}
+          onFocus={(e) => {
+            if (!isCurrentUser) {
+              e.target.style.boxShadow = '0 0 0 2px #4169E1';
+              e.target.style.borderColor = 'transparent';
+            }
+          }}
+          onBlur={(e) => {
+            if (!isCurrentUser) {
+              e.target.style.boxShadow = '';
+              e.target.style.borderColor = '';
+            }
+          }}
           required
         />
         {errors.name && (
@@ -129,9 +150,24 @@ const TaskForm = ({ task, onSubmit, onCancel, isEditing = false }) => {
           type="number"
           value={formData.pointValue}
           onChange={(e) => handleNumberChange('pointValue', e.target.value)}
-          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+          className={`w-full px-3 py-2 border rounded-lg ${isCurrentUser ? 'focus:ring-2 focus:ring-purple-500' : ''} focus:border-transparent ${
             errors.pointValue ? 'border-red-500' : 'border-gray-300'
           }`}
+          style={!isCurrentUser ? {
+            outlineColor: '#4169E1'
+          } : {}}
+          onFocus={(e) => {
+            if (!isCurrentUser) {
+              e.target.style.boxShadow = '0 0 0 2px #4169E1';
+              e.target.style.borderColor = 'transparent';
+            }
+          }}
+          onBlur={(e) => {
+            if (!isCurrentUser) {
+              e.target.style.boxShadow = '';
+              e.target.style.borderColor = '';
+            }
+          }}
           required
         />
         {errors.pointValue && (
@@ -151,7 +187,22 @@ const TaskForm = ({ task, onSubmit, onCancel, isEditing = false }) => {
         <select
           value={formData.type}
           onChange={(e) => handleInputChange('type', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg ${isCurrentUser ? 'focus:ring-2 focus:ring-purple-500' : ''} focus:border-transparent`}
+          style={!isCurrentUser ? {
+            outlineColor: '#4169E1'
+          } : {}}
+          onFocus={(e) => {
+            if (!isCurrentUser) {
+              e.target.style.boxShadow = '0 0 0 2px #4169E1';
+              e.target.style.borderColor = 'transparent';
+            }
+          }}
+          onBlur={(e) => {
+            if (!isCurrentUser) {
+              e.target.style.boxShadow = '';
+              e.target.style.borderColor = '';
+            }
+          }}
         >
           {Object.entries(TASK_TYPES).map(([key, value]) => (
             <option key={key} value={value}>

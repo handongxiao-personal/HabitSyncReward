@@ -28,9 +28,10 @@ const UserSwitcher = () => {
           onClick={() => actions.setViewingUser('other')}
           className={`flex items-center space-x-2 px-4 py-3 rounded-lg font-medium transition-all ${
             state.viewingUser === 'other'
-              ? 'bg-purple-600 text-white shadow-md'
+              ? 'text-white shadow-md'
               : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
           }`}
+          style={state.viewingUser === 'other' ? { backgroundColor: '#4169E1' } : {}}
         >
           <span className="text-sm">👯</span>
           <span className="text-sm">{state.partnerProfile?.username || 'Partner'}</span>
